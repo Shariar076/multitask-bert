@@ -164,11 +164,11 @@ if __name__ == '__main__':
     ]
 
     # Map labels to integers
-    label2id = {"O": 0, "B-Amount": 1, "B-Person": 2, "B-AccountType": 3, "I-AccountType": 4}
-    ner_labels_encoded = [[label2id[label] for label in sentence_labels] for sentence_labels in ner_labels]
-
+    # {0: 'O', 1: 'B-Amount', 2: 'B-Person', 3: 'B-AccountType', 4: 'I-AccountType'}
+    ner_labels = [[0, 0, 0, 0, 1, 0, 2, 0, 0, 3, 4],
+                  [0, 0, 0, 0, 0, 0, 0, 3, 4]]
     # Initialize NER dataset
-    ner_dataset = NERDataset(ner_sentences, ner_labels_encoded, tokenizer)
+    ner_dataset = NERDataset(ner_sentences, ner_labels, tokenizer)
 
     # Example RE data
     re_sentences = ["I want to send $500 to Alif from my savings account."]
@@ -193,7 +193,7 @@ if __name__ == '__main__':
     intent_dataloader = DataLoader(intent_dataset, batch_size=batch_size, shuffle=True)
     ner_dataloader = DataLoader(ner_dataset, batch_size=batch_size, shuffle=True)
     re_dataloader = DataLoader(re_dataset, batch_size=batch_size, shuffle=True)
-    '''  
+
     # Model and Optimizer
     model = MultitaskBERT(
         model_name="bert-base-uncased",
@@ -252,7 +252,6 @@ if __name__ == '__main__':
 
     torch.save(model.state_dict(), "multitask_bert_model.pth")
     print("Training complete.")
-    '''
 
     model = MultitaskBERT(
         model_name="bert-base-uncased",
@@ -289,11 +288,10 @@ if __name__ == '__main__':
     from sklearn.metrics import classification_report
 
 
-    def evaluate_ner(model, dataloader, label2id):
+    def evaluate_ner(model, dataloader, id2label):
         model.eval()
         all_preds = []
         all_labels = []
-        id2label = {v: k for k, v in label2id.items()}
 
         with torch.no_grad():
             for batch in dataloader:
@@ -348,7 +346,9 @@ if __name__ == '__main__':
     evaluate_intent(model, intent_eval_dataloader)
 
     # NER
-    evaluate_ner(model, ner_eval_dataloader, label2id)
+    id2label = {0: 'O', 1: 'B-Amount', 2: 'B-Person', 3: 'B-AccountType', 4: 'I-AccountType'}
+    evaluate_ner(model, ner_eval_dataloader, id2label)
 
     # Relation Extraction
     evaluate_re(model, re_eval_dataloader)
+
